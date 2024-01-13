@@ -80,38 +80,49 @@ class DetectLandingPad:
 
         # Ultralytics has documentation and examples
 
+        predictions = self.__model.predict(image,  device=self.__DEVICE, verbose=True)
+
+        print(predictions)
+
+        prediction = predictions[0]
+
         # Use the model's predict() method to run inference
         # Parameters of interest:
         # * source
         # * conf
         # * device
         # * verbose
-        predictions = ...
 
-        # Get the Result object
-        prediction = ...
 
         # Plot the annotated image from the Result object
         # Include the confidence value
-        image_annotated = ...
+        image_annotated = prediction.plot()
 
-        # Get the xyxy boxes list from the Boxes object in the Result object
-        boxes_xyxy = ...
+        # Get the xyxy boxes list from the Boxes object in the Result
+
+        print("boxes", prediction.boxes)
+        boxes_xyxy = prediction.boxes.xyxy
+
+        print("xyxy", boxes_xyxy)
 
         # Detach the xyxy boxes to make a copy,
         # move the copy into CPU space,
         # and convert to a numpy array
-        boxes_cpu = ...
+        boxes_cpu = boxes_xyxy.detach().clone().to('cpu').numpy()
 
         # Loop over the boxes list and create a list of bounding boxes
         bounding_boxes = []
         # Hint: .shape gets the dimensions of the numpy array
-        # for i in range(0, ...):
+        print("your mom",boxes_cpu)
+        for i in range(0, len(boxes_cpu)):
             # Create BoundingBox object and append to list
             # result, box = ...
+            bounding_boxes.append( bounding_box.BoundingBox.create(boxes_cpu[i])[1])
+
+        return (bounding_boxes, image_annotated)
 
         # Remove this when done
-        raise NotImplementedError
+        # raise NotImplementedError
 
         # ============
         # ↑ BOOTCAMPERS MODIFY ABOVE THIS COMMENT ↑
