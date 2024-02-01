@@ -11,7 +11,9 @@ from .. import commands
 from .. import drone_report
 from .. import drone_status
 from .. import location
+from ..drone_status import DroneStatus
 from ..private.decision import base_decision
+import math
 
 
 # Disable for bootcamp use
@@ -20,6 +22,8 @@ from ..private.decision import base_decision
 
 # All logic around the run() method
 # pylint: disable-next=too-few-public-methods
+
+
 class DecisionSimpleWaypoint(base_decision.BaseDecision):
     """
     Travel to the designed waypoint.
@@ -37,11 +41,14 @@ class DecisionSimpleWaypoint(base_decision.BaseDecision):
         # ↓ BOOTCAMPERS MODIFY BELOW THIS COMMENT ↓
         # ============
 
-        # Add your own
+        self.status = 'HALTED'
+        self.location = (0, 0)
+        self.command = commands.Command.create_null_command()
 
         # ============
         # ↑ BOOTCAMPERS MODIFY ABOVE THIS COMMENT ↑
         # ============
+
 
     def run(self,
             report: drone_report.DroneReport,
@@ -67,14 +74,28 @@ class DecisionSimpleWaypoint(base_decision.BaseDecision):
         # ============
         # ↓ BOOTCAMPERS MODIFY BELOW THIS COMMENT ↓
         # ============
+        def is_within_acceptance_radius(current_location: location, target_location: location, radius: float):
+            return (math.hypot((current_location.location_x - target_location.location_x),
+                               (current_location.location_y - target_location.location_y)) <= radius)
+            pass
 
         # Do something based on the report and the state of this class...
-
-        # Remove this when done
-        raise NotImplementedError
-
+        if report.status == DroneStatus.HALTED:
+            if is_within_acceptance_radius(report.position, self.waypoint, self.acceptance_radius):
+                command = commands.Command.create_land_command()
+            else:
+                command = commands.Command.create_set_relative_destination_command(
+                    self.waypoint.location_x - report.position.location_x,
+                    self.waypoint.location_y - report.position.location_y
+                )
+        elif report.status == DroneStatus.MOVING:
+            if is_within_acceptance_radius(report.position, self.waypoint, self.acceptance_radius):
+                command = commands.Command.create_halt_command()
+            else:
+                command = commands.Command.create_null_command()
         # ============
         # ↑ BOOTCAMPERS MODIFY ABOVE THIS COMMENT ↑
         # ============
 
         return command
+
